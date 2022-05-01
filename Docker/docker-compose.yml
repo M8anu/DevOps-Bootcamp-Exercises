@@ -1,0 +1,38 @@
+# Please refer https://aka.ms/HTTPSinContainer on how to setup an https developer certificate for your ASP .NET Core service.
+
+version: '3.4'
+
+services:
+  some-mongo:
+    image: mongo:latest
+    volumes:
+      - topics-data:/data/db   
+    restart: always
+    networks:
+        - lemoncode-challenge
+  topics-api:
+    depends_on:
+      - some-mongo
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    networks: 
+      - lemoncode-challenge
+  frontend-web:
+    depends_on:
+      - topics-api
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:3000"
+    restart: always
+    environment:
+      - API_URI=http://topics-api:5000/api/topics
+    networks: 
+      - lemoncode-challenge
+volumes:
+    topics-data:
+networks:
+    lemoncode-challenge:
