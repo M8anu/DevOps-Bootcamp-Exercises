@@ -1,23 +1,5 @@
 # Ejercicios
- 
-## Ejercios Jenkins
- 
-### 1. CI/CD de una Java + Gradle
- 
-En el directorio raíz de este [código fuente](./jenkins-resources), crea un `Jenkinsfile` que contenga un pipeline declarativa con los siguientes stages:
- 
-* **Checkout** descarga de código desde un repositorio remoto, preferentemente utiliza GitHub.
-* **Compile** compilar el código fuente, para ello utilizar `gradlew compileJava`
-* **Unit Tests** ejecutar los test unitarios, para ello utilizar `gradlew test`
- 
-Para ejecutar Jenkins en local y tener las dependencias necesarias disponibles podemos contruir una imagen a partir de [este Dockerfile](./jenkins-resources/gradle.Dockerfile)
- 
-### 2. Modificar la pipeline para que utilice la imagen Docker de Gradle como build runner
 
-* Utilizar Docker in Docker a la hora de levantar Jenkins para realizar este ejercicio.
-* Como plugins deben estar instalados `Docker` y `Docker Pipeline`
-* Usar la imagen de Docker `gradle:6.6.1-jre14-openj9`
- 
 ## Ejercicios GitLab
  
 ### 1. CI/CD de una aplicación spring
