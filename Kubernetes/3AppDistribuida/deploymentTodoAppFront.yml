@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-front
+  namespace: default
+  labels:
+    app: todo-front
+spec:
+  selector:
+    matchLabels:
+      app: todo-front
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: todo-front
+    spec:
+      containers:
+      - name: todo-front
+        image: m1ndbl0w/todo-front:latest
+        ports:
+        - containerPort: 80
+      restartPolicy: Always
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: todo-front
+  name: todo-front-svc
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: todo-front
+  type: ClusterIP

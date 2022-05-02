@@ -1,0 +1,122 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-configmap
+  labels:
+    app: todo-app
+    db: todo-app-db
+data:
+  PGDATA: "/data/pgdata"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secrets
+  labels:
+    app: todo-app
+    db: todo-app-db
+data:
+  POSTGRES_PWD: "postgres"
+---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: postgres-sto-class
+  labels:
+    app: todo-app
+    db: todo-app-db
+provisioner: docker.io/hostpath
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: postgres-pv
+  labels:
+    app: todo-app
+    db: todo-app-db
+spec:
+  storageClassName: postgres-sto-class
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/local"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pv-claim
+  labels:
+    app: todo-app
+    db: todo-app-db
+spec:
+  storageClassName: postgres-sto-class
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  labels:
+    app: todo-app
+    db: todo-app-db
+spec:
+  serviceName: "postgres"
+  replicas: 1
+  selector:
+    matchLabels:
+      db: todo-app-db
+      app: todo-app
+  template:
+    metadata:
+      labels:
+        db: todo-app-db
+        app: todo-app
+    spec:
+      containers:
+      - image: postgres:10.4
+        name: postgres
+        env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: POSTGRES_PWD
+        - name: PGDATA
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-configmap
+              key: PGDATA
+        ports:
+        - containerPort: 5432
+          name: postgres-sql
+        volumeMounts:
+        - name: postgres-persistent-storage
+          mountPath: /data
+      volumes:
+      - name: postgres-persistent-storage
+        persistentVolumeClaim:
+          claimName: postgres-pv-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-app-db-svc
+  labels:
+    app: todo-app
+    db: todo-app-db
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: postgres-sql
+    port: 5432
+    targetPort: postgres-sql
+    protocol: TCP 
+  selector:
+    db: todo-app-db

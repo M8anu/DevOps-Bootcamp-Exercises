@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-api-configmap
+  labels:
+    app: todo-api
+data:
+  NODE_ENV: "product"
+  PORT: "3000"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-api
+  namespace: default
+  labels:
+    app: todo-api
+spec:
+  selector:
+    matchLabels:
+      app: todo-api
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: todo-api
+    spec:
+      containers:
+      - name: todo-api
+        image: m1ndbl0w/todo-api:latest
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: todo-api-configmap
+              key: NODE_ENV
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: todo-api-configmap
+              key: PORT
+        ports:
+        - containerPort: 3000
+      restartPolicy: Always
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: todo-api
+  name: todo-api-svc
+spec:
+  ports:
+  - port: 3000
+    protocol: TCP
+    targetPort: 3000
+  selector:
+    app: todo-api
+  type: ClusterIP

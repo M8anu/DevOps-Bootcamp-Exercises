@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-app-configmap
+  labels:
+    app: todo-app
+    db: todo-app-db
+data:
+  NODE_ENV: "prd"
+  PORT: "3000"
+  DB_HOST: "todo-app-db-svc"
+  DB_USER: "postgres"
+  DB_PORT: "5432"
+  DB_NAME: "todos_db"
+  DB_VERSION: "10.4"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: todo-app-secrets
+  labels:
+    app: todo-app
+    db: todo-app-db
+data:
+  POSTGRES_PWD: "postgres"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-app
+  namespace: default
+  labels:
+    app: todo-app
+    db: todo-app-db
+spec:
+  selector:
+    matchLabels:
+      app: todo-app
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: todo-app
+    spec:
+      containers:
+      - name: todo-app
+        image: m1ndbl0w/todo-app:latest
+        env:
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: todo-app-secrets
+              key: POSTGRES_PWD
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: todo-app-configmap
+              key: NODE_ENV
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: todo-app-configmap
+              key: PORT
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: todo-app-configmap
+              key: DB_HOST
+        - name: DB_USER
+          valueFrom:
+            configMapKeyRef:
+              name: todo-app-configmap
+              key: DB_USER
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: todo-app-configmap
+              key: DB_PORT
+        - name: DB_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: todo-app-configmap
+              key: DB_VERSION
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: todo-app-configmap
+              key: DB_NAME
+        ports:
+        - containerPort: 3000
+      restartPolicy: Always
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: todo-app
+  name: todo-app-svc
+spec:
+  ports:
+  - port: 3000
+    protocol: TCP
+    targetPort: 3000
+  selector:
+    app: todo-app
+  type: LoadBalancer 
